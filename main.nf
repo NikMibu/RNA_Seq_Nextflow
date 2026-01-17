@@ -172,12 +172,16 @@ process DEXSEQ_ANALYSIS {
     for (bam in bam_files) {
         sample_id <- gsub("\\\\.Aligned.*", "", bam)
         sample_id <- gsub("\\\\.bam\$", "", sample_id)
+        count_file <- paste0(sample_id, ".txt")
         cmd <- paste(
             "python", file.path(dexseq_scripts, "dexseq_count.py"),
             "-p yes -r pos -s no -f bam",
-            "dexseq.gff", bam, paste0(sample_id, ".txt")
+            "dexseq.gff", bam, count_file
         )
         system(cmd)
+        
+        # Remove meta lines (they cause parsing errors)
+        system(paste("grep -v '^_' ", count_file, "> temp.txt && mv temp.txt", count_file))
     }
     
     # Read sample info
