@@ -43,11 +43,12 @@ hisat2 --version
 
 ### 2. Daten herunterladen
 
+**Wichtig:** Alle Scripts müssen aus dem Projekt-Root-Verzeichnis ausgeführt werden!
+
 #### FASTQ-Dateien (RNA-Seq Daten)
 
 ```bash
-cd scripts
-./01_download_sra.sh
+./scripts/01_download_sra.sh
 ```
 
 Dies lädt 8 Samples herunter (~4 GB komprimiert) und erstellt automatisch `data/samplesheet.csv`.
@@ -55,8 +56,21 @@ Dies lädt 8 Samples herunter (~4 GB komprimiert) und erstellt automatisch `data
 #### Referenz-Genom und Annotation
 
 ```bash
-./02_download_reference.sh
+./scripts/02_download_reference.sh
 ```
+
+Downloads:
+- Human Referenz-Genom (GRCh38)
+- GENCODE Annotation (v43)
+
+#### HISAT2-Index erstellen
+
+```bash
+./scripts/03_build_hisat_index.sh
+```
+
+Erstellt den HISAT2-Index (~8 GB). Der Index-Build dauert ~30-60 Minuten.
+
 
 Downloads:
 - Human Referenz-Genom (GRCh38)
