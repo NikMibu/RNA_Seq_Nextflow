@@ -29,9 +29,17 @@ dependencies:
   - subread>=2.0.3
   - htseq>=2.0.0
   
+  # Splicing analysis - rMATS dependencies
+  - cython>=0.29.21
+  - openblas
+  - lapack
+  - gsl>=2.5
+  - gcc>=5.4.0
+  - gfortran
+  - cmake>=3.15.4
+  
   # R and Bioconductor
   - r-base>=4.3.0
-  - bioconductor-dexseq>=1.46.0
   - bioconductor-deseq2>=1.40.0
   - bioconductor-genomicfeatures>=1.52.0
   - bioconductor-genomicalignments>=1.36.0

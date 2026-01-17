@@ -9,7 +9,7 @@ Diese Pipeline führt folgende Schritte aus:
 1. **Quality Control** - FastQC für FASTQ-Dateien
 2. **Alignment** - HISAT2 für Read-Mapping
 3. **Quantifizierung** - featureCounts für Gen-Level Counts
-4. **Splicing-Analyse** - DEXSeq für differentielle Exon-Nutzung (von AI Erstellt)
+4. **Splicing-Analyse** - rMATS für differentielle Splicing-Events
 
 ## Voraussetzungen
 
@@ -71,13 +71,15 @@ Downloads:
 
 Erstellt den HISAT2-Index (~8 GB). Der Index-Build dauert ~30-60 Minuten.
 
+#### rMATS installieren
 
-Downloads:
-- Human Referenz-Genom (GRCh38)
-- GENCODE Annotation (v43)
-- Erstellt HISAT2-Index (~8 GB)
+```bash
+./scripts/04_install_rmats.sh
+```
 
-**Hinweis:** Der Index-Build dauert ~30-60 Minuten.
+Installiert rMATS-turbo von GitHub und erstellt einen Symlink. Die Dependencies (Cython, GSL, GCC, etc.) müssen bereits über `environment.yml` installiert sein.
+
+**Hinweis:** Der Build dauert ~5-10 Minuten.
 
 ## Pipeline ausführen
 
@@ -127,17 +129,24 @@ results/
 ├── fastqc/              # QC-Reports (HTML)
 ├── hisat2/              # BAM-Dateien und Alignment-Logs
 ├── counts/              # featureCounts Tabellen
-└── dexseq/
-    ├── dexseq_results.csv       # Differentielle Exon-Nutzung
-    ├── dexseq_report.html       # Interaktiver Report
-    └── *_splicing.pdf           # Plots für Target-Gene
+└── rmats/
+    ├── rmats_output/            # rMATS Ergebnisse
+    │   ├── RI.MATS.JC.txt       # Retained Introns
+    │   ├── SE.MATS.JC.txt       # Skipped Exons
+    │   ├── A3SS.MATS.JC.txt     # Alternative 3' Splice Sites
+    │   ├── A5SS.MATS.JC.txt     # Alternative 5' Splice Sites
+    │   └── MXE.MATS.JC.txt      # Mutually Exclusive Exons
+    └── *_significant_events.pdf # Plots für signifikante Events
 ```
 
 ### Wichtige Dateien
 
-- `dexseq_results.csv` - Vollständige DEXSeq-Ergebnisse mit p-Werten
-- `dexseq_report.html` - Interaktiver HTML-Report
-- `GENE_splicing.pdf` - Splicing-Plots für Target-Gene:
+- `RI.MATS.JC.txt` - Retained Intron Events (z.B. ABCC5)
+- `SE.MATS.JC.txt` - Skipped Exon Events
+- `A3SS.MATS.JC.txt` - Alternative 3' Splice Site Events (z.B. CRNDE)
+- `A5SS.MATS.JC.txt` - Alternative 5' Splice Site Events
+- `MXE.MATS.JC.txt` - Mutually Exclusive Exon Events
+- `*_significant_events.pdf` - Plots für signifikante Events (FDR < 0.05) in Target-Genen:
   - ABCC5, CRNDE, UQCC
   - GUSBP11, ANKHD1, ADAM12
 
@@ -193,7 +202,9 @@ RNA_seq/
 ├── README.md               # Diese Datei
 ├── scripts/
 │   ├── 01_download_sra.sh
-│   └── 02_download_reference.sh
+│   ├── 02_download_reference.sh
+│   ├── 03_build_hisat_index.sh
+│   └── 04_install_rmats.sh
 ├── data/
 │   ├── samplesheet.csv     # Sample-Metadaten
 │   └── fastq/              # FASTQ-Dateien
@@ -240,11 +251,8 @@ Die Pipeline analysiert 8 Uveal Melanoma Samples:
 
 - **HISAT2:** Kim et al. (2019) - Graph-based genome alignment
 - **featureCounts:** Liao et al. (2014) - Read summarization
-- **DEXSeq:** Anders et al. (2012) - Differential exon usage
+- **rMATS:** Shen et al. (2014) - rMATS: robust and flexible detection of differential alternative splicing
 - **Nextflow:** Di Tommaso et al. (2017) - Workflow management
-
-=======
-# RNA-Seq Pipeline für Uveal Melanoma
 
 Nextflow-Pipeline zur Analyse von RNA-Seq Daten mit Fokus auf differentielle Splicing-Analyse bei SF3B1-Mutationen.
 
@@ -358,17 +366,24 @@ results/
 ├── fastqc/              # QC-Reports (HTML)
 ├── hisat2/              # BAM-Dateien und Alignment-Logs
 ├── counts/              # featureCounts Tabellen
-└── dexseq/
-    ├── dexseq_results.csv       # Differentielle Exon-Nutzung
-    ├── dexseq_report.html       # Interaktiver Report
-    └── *_splicing.pdf           # Plots für Target-Gene
+└── rmats/
+    ├── rmats_output/            # rMATS Ergebnisse
+    │   ├── RI.MATS.JC.txt       # Retained Introns
+    │   ├── SE.MATS.JC.txt       # Skipped Exons
+    │   ├── A3SS.MATS.JC.txt     # Alternative 3' Splice Sites
+    │   ├── A5SS.MATS.JC.txt     # Alternative 5' Splice Sites
+    │   └── MXE.MATS.JC.txt      # Mutually Exclusive Exons
+    └── *_significant_events.pdf # Plots für signifikante Events
 ```
 
 ### Wichtige Dateien
 
-- `dexseq_results.csv` - Vollständige DEXSeq-Ergebnisse mit p-Werten
-- `dexseq_report.html` - Interaktiver HTML-Report
-- `GENE_splicing.pdf` - Splicing-Plots für Target-Gene:
+- `RI.MATS.JC.txt` - Retained Intron Events (z.B. ABCC5)
+- `SE.MATS.JC.txt` - Skipped Exon Events
+- `A3SS.MATS.JC.txt` - Alternative 3' Splice Site Events (z.B. CRNDE)
+- `A5SS.MATS.JC.txt` - Alternative 5' Splice Site Events
+- `MXE.MATS.JC.txt` - Mutually Exclusive Exon Events
+- `*_significant_events.pdf` - Plots für signifikante Events (FDR < 0.05) in Target-Genen:
   - ABCC5, CRNDE, UQCC
   - GUSBP11, ANKHD1, ADAM12
 
@@ -424,7 +439,9 @@ RNA_seq/
 ├── README.md               # Diese Datei
 ├── scripts/
 │   ├── 01_download_sra.sh
-│   └── 02_download_reference.sh
+│   ├── 02_download_reference.sh
+│   ├── 03_build_hisat_index.sh
+│   └── 04_install_rmats.sh
 ├── data/
 │   ├── samplesheet.csv     # Sample-Metadaten
 │   └── fastq/              # FASTQ-Dateien
@@ -471,7 +488,7 @@ Die Pipeline analysiert 8 Uveal Melanoma Samples:
 
 - **HISAT2:** Kim et al. (2019) - Graph-based genome alignment
 - **featureCounts:** Liao et al. (2014) - Read summarization
-- **DEXSeq:** Anders et al. (2012) - Differential exon usage
+- **rMATS:** Shen et al. (2014) - rMATS: robust and flexible detection of differential alternative splicing: https://github.com/Xinglab/rmats-turbo
 - **Nextflow:** Di Tommaso et al. (2017) - Workflow management
 
 

@@ -4,3 +4,4 @@
 .nextflow.log*
 /results
 /work
+/rmats-turbo

@@ -9,6 +9,7 @@ params.input = "data/samplesheet.csv"
 params.outdir = "results"
 params.hisat2_index = "reference/hisat2_index"
 params.gtf = "reference/annotation/gencode.v43.annotation.gtf"
+params.rmats_path = System.getenv("RMATS_PATH") ?: "rmats.py"
 
 log.info """\
     RNA-SEQ PIPELINE
@@ -64,8 +65,8 @@ workflow {
     // Count reads per gene (runs once per sample)
     FEATURECOUNTS(HISAT2_ALIGN.out.bam, gtf_file)
     
-    // DEXSeq for differential splicing
-    DEXSEQ_ANALYSIS(
+    // rMATS for differential splicing
+    RMATS(
         HISAT2_ALIGN.out.bam.map { sample_id, condition, bam -> bam }.collect(),
         gtf_file,
         samplesheet_file
@@ -138,8 +139,11 @@ process FEATURECOUNTS {
     """
 }
 
-process DEXSEQ_ANALYSIS {
-    publishDir "${params.outdir}/dexseq", mode: 'copy'
+process RMATS {
+    tag "rMATS_analysis"
+    publishDir "${params.outdir}/rmats", mode: 'copy'
+    cpus 8
+    memory 16.GB
     
     input:
     path bams
@@ -147,81 +151,102 @@ process DEXSEQ_ANALYSIS {
     path samplesheet
     
     output:
-    path "dexseq_results.csv"
+    path "rmats_output/*"
     path "*.pdf"
-    path "dexseq_report.html"
     
     script:
     """
-    #!/usr/bin/env Rscript
+    #!/bin/bash
+    set -e
     
-    library(DEXSeq)
-    library(tidyverse)
+    # Find rMATS executable
+    RMATS_CMD="${params.rmats_path}"
+    if ! command -v \${RMATS_CMD} &> /dev/null; then
+        # Try common installation paths
+        if [ -f "\$HOME/rmats-turbo/rmats.py" ]; then
+            RMATS_CMD="\$HOME/rmats-turbo/rmats.py"
+        elif [ -f "\$CONDA_PREFIX/bin/rmats.py" ]; then
+            RMATS_CMD="\$CONDA_PREFIX/bin/rmats.py"
+        else
+            echo "ERROR: rMATS not found. Please install rMATS or set RMATS_PATH environment variable"
+            exit 1
+        fi
+    fi
     
-    # Target genes from paper
-    target_genes <- c("ABCC5", "CRNDE", "UQCC", 
-                      "GUSBP11", "ANKHD1", "ADAM12")
+    # Get absolute paths
+    GTF_PATH=\$(realpath ${gtf})
+    WORK_DIR=\$(pwd)
     
-    # Prepare GTF for DEXSeq
-    dexseq_scripts <- file.path(Sys.getenv("CONDA_PREFIX"), "lib/R/library/DEXSeq/python_scripts")
-    system(paste("python", file.path(dexseq_scripts, "dexseq_prepare_annotation.py"), "${gtf}", "dexseq.gff"))
+    # Create BAM lists with absolute paths
+    grep "SF3B1_mutant" ${samplesheet} | cut -d',' -f1 > mutant_samples.txt
+    grep "SF3B1_wildtype" ${samplesheet} | cut -d',' -f1 > wildtype_samples.txt
     
-    # Count reads per exon for each BAM
-    bam_files <- list.files(pattern = "\\\\.bam\$")
+    # Get mutant BAMs with absolute paths
+    > b1.txt
+    for sample in \$(cat mutant_samples.txt); do
+        find . -name "\${sample}*.bam" -type f | while read bam; do
+            echo "\$(realpath "\${bam}")" >> b1.txt
+        done
+    done
     
-    for (bam in bam_files) {
-        sample_id <- gsub("\\\\.Aligned.*", "", bam)
-        sample_id <- gsub("\\\\.bam\$", "", sample_id)
-        count_file <- paste0(sample_id, ".txt")
-        cmd <- paste(
-            "python", file.path(dexseq_scripts, "dexseq_count.py"),
-            "-p yes -r pos -s no -f bam",
-            "dexseq.gff", bam, count_file
-        )
-        system(cmd)
-        
-        # Remove meta lines (they cause parsing errors)
-        system(paste("grep -v '^_' ", count_file, "> temp.txt && mv temp.txt", count_file))
-    }
+    # Get wildtype BAMs with absolute paths
+    > b2.txt
+    for sample in \$(cat wildtype_samples.txt); do
+        find . -name "\${sample}*.bam" -type f | while read bam; do
+            echo "\$(realpath "\${bam}")" >> b2.txt
+        done
+    done
     
-    # Read sample info
-    samples <- read.csv("${samplesheet}")
-    count_files <- paste0(samples\$sample_id, ".txt")
+    # Convert to comma-separated format
+    paste -sd, b1.txt > b1_list.txt
+    paste -sd, b2.txt > b2_list.txt
     
-    # Create DEXSeq dataset
-    dxd <- DEXSeqDataSetFromHTSeq(
-        count_files,
-        sampleData = samples,
-        design = ~ sample + exon + condition:exon,
-        flattenedfile = "dexseq.gff"
-    )
-    
-    # Run DEXSeq
-    dxd <- estimateSizeFactors(dxd)
-    dxd <- estimateDispersions(dxd)
-    dxd <- testForDEU(dxd)
-    dxd <- estimateExonFoldChanges(dxd, fitExpToVar = "condition")
-    
-    # Results
-    results <- DEXSeqResults(dxd)
-    write.csv(as.data.frame(results), "dexseq_results.csv")
+    # Run rMATS
+    \${RMATS_CMD} --b1 b1_list.txt \\
+                  --b2 b2_list.txt \\
+                  --gtf \${GTF_PATH} \\
+                  --od rmats_output \\
+                  -t paired \\
+                  --readLength 202 \\
+                  --nthread ${task.cpus} \\
+                  --libType fr-unstranded \\
+                  --variable-read-length \\
+                  --allow-clipping
     
     # Plot target genes
-    for (gene in target_genes) {
-        pdf(paste0(gene, "_splicing.pdf"))
-        tryCatch({
-            plotDEXSeq(results, gene, displayTranscripts = TRUE)
-        }, error = function(e) {
-            plot.new()
-            text(0.5, 0.5, paste("Gene", gene, "not found"))
-        })
-        dev.off()
+    Rscript - <<'RSCRIPT'
+    library(ggplot2)
+    library(dplyr)
+    
+    target_genes <- c("ABCC5", "CRNDE", "UQCC", "GUSBP11", "ANKHD1", "ADAM12")
+    
+    # Read rMATS results
+    for (event_type in c("RI", "SE", "A5SS", "A3SS", "MXE")) {
+        file <- paste0("rmats_output/", event_type, ".MATS.JC.txt")
+        if (file.exists(file)) {
+            data <- read.table(file, header=TRUE, sep="\\t", stringsAsFactors=FALSE)
+            
+            # Filter for target genes
+            data_target <- data %>% 
+                filter(geneSymbol %in% target_genes, FDR < 0.05)
+            
+            if (nrow(data_target) > 0) {
+                pdf(paste0(event_type, "_significant_events.pdf"))
+                print(
+                    ggplot(data_target, aes(x=geneSymbol, y=IncLevelDifference)) +
+                    geom_bar(stat="identity") +
+                    theme_minimal() +
+                    labs(title=paste(event_type, "- Significant Events"),
+                         x="Gene", y="Inclusion Level Difference") +
+                    theme(axis.text.x = element_text(angle=45, hjust=1))
+                )
+                dev.off()
+            }
+        }
     }
     
-    # HTML report
-    DEXSeqHTML(results, FDR = 0.1, path = "dexseq_report.html")
-    
-    cat("DEXSeq analysis complete!\\n")
+    cat("rMATS analysis complete!\\n")
+    RSCRIPT
     """
 }
 
