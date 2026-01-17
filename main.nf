@@ -9,7 +9,7 @@ params.input = "data/samplesheet.csv"
 params.outdir = "results"
 params.hisat2_index = "reference/hisat2_index"
 params.gtf = "reference/annotation/gencode.v43.annotation.gtf"
-params.rmats_path = System.getenv("RMATS_PATH") ?: "rmats.py"
+params.rmats_path = System.getenv("RMATS_PATH") ?: "/mnt/d/RNA_seq/rmats-turbo/rmats.py"
 
 log.info """\
     RNA-SEQ PIPELINE
@@ -158,60 +158,55 @@ process RMATS {
     """
     #!/bin/bash
     set -e
-    
-    # Find rMATS executable
-    RMATS_CMD="${params.rmats_path}"
-    if ! command -v \${RMATS_CMD} &> /dev/null; then
-        # Try common installation paths
-        if [ -f "\$HOME/rmats-turbo/rmats.py" ]; then
-            RMATS_CMD="\$HOME/rmats-turbo/rmats.py"
-        elif [ -f "\$CONDA_PREFIX/bin/rmats.py" ]; then
-            RMATS_CMD="\$CONDA_PREFIX/bin/rmats.py"
-        else
-            echo "ERROR: rMATS not found. Please install rMATS or set RMATS_PATH environment variable"
-            exit 1
-        fi
-    fi
-    
-    # Get absolute paths
+
+    RMATS_CMD="python ${params.rmats_path}"
     GTF_PATH=\$(realpath ${gtf})
-    WORK_DIR=\$(pwd)
-    
-    # Create BAM lists with absolute paths
+
+    # Read sample lists
     grep "SF3B1_mutant" ${samplesheet} | cut -d',' -f1 > mutant_samples.txt
     grep "SF3B1_wildtype" ${samplesheet} | cut -d',' -f1 > wildtype_samples.txt
-    
-    # Get mutant BAMs with absolute paths
+
+    # Build BAM lists (direct matching, no subshell)
     > b1.txt
-    for sample in \$(cat mutant_samples.txt); do
-        find . -name "\${sample}*.bam" -type f | while read bam; do
-            echo "\$(realpath "\${bam}")" >> b1.txt
+    while read sample; do
+        for bam in \${sample}.bam; do
+            if [ -f "\$bam" ]; then
+                realpath "\$bam" >> b1.txt
+            fi
         done
-    done
-    
-    # Get wildtype BAMs with absolute paths
+    done < mutant_samples.txt
+
     > b2.txt
-    for sample in \$(cat wildtype_samples.txt); do
-        find . -name "\${sample}*.bam" -type f | while read bam; do
-            echo "\$(realpath "\${bam}")" >> b2.txt
+    while read sample; do
+        for bam in \${sample}.bam; do
+            if [ -f "\$bam" ]; then
+                realpath "\$bam" >> b2.txt
+            fi
         done
-    done
-    
-    # Convert to comma-separated format
+    done < wildtype_samples.txt
+
+    # Convert to comma-separated
     paste -sd, b1.txt > b1_list.txt
     paste -sd, b2.txt > b2_list.txt
-    
+
+    # Debug
+    echo "b1_list.txt:"
+    cat b1_list.txt
+    echo "b2_list.txt:"
+    cat b2_list.txt
+
     # Run rMATS
     \${RMATS_CMD} --b1 b1_list.txt \\
-                  --b2 b2_list.txt \\
-                  --gtf \${GTF_PATH} \\
-                  --od rmats_output \\
-                  -t paired \\
-                  --readLength 202 \\
-                  --nthread ${task.cpus} \\
-                  --libType fr-unstranded \\
-                  --variable-read-length \\
-                  --allow-clipping
+                --b2 b2_list.txt \\
+                --gtf \${GTF_PATH} \\
+                --od rmats_output \\
+                --tmp rmats_tmp \\
+                -t paired \\
+                --readLength 202 \\
+                --nthread ${task.cpus} \\
+                --libType fr-unstranded \\
+                --variable-read-length \\
+                --allow-clipping
     
     # Plot target genes
     Rscript - <<'RSCRIPT'
