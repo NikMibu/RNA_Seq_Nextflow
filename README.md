@@ -1,3 +1,125 @@
+# Scientific context of the Project
+## What is uveal melanoma?
+Uveal melanoma is a rare but aggressive cancer of the eye. More precisely what “uveal” means:
+The uvea is the middle, pigmented layer of the eye, and it has three parts:
+- Iris (colored part at the front)
+- Ciliary body
+- Choroid (vascular layer at the back of the eye)
+  
+Uveal melanoma arises from melanocytes (pigment-producing cells) located in one of these uveal tissues—most commonly the choroid.
+
+### Key characteristics
+It is the most common primary intraocular cancer in adults
+Distinct from cutaneous (skin) melanoma:
+- Different mutation spectrum
+- Different biology
+- Different clinical behavior
+Often diagnosed by eye examination rather than biopsy
+
+### Genetics & molecular biology (why it matters for our project)
+Uveal melanoma is genetically quite simple but very specific:
+Early “driver” mutations (usually mutually exclusive):
+- GNAQ
+- GNA11
+
+Progression / prognostic mutations:
+- BAP1 → associated with metastasis (poor prognosis)
+- SF3B1 → associated with late-onset metastasis
+- EIF1AX → generally better prognosis
+  
+This is why SF3B1 is so interesting:
+it encodes a core splicing factor, making uveal melanoma a natural model to study mutation-driven splicing dysregulation.
+
+### Clinical relevance
+- Primary tumor can often be treated locally (radiotherapy, surgery)
+- ~50% of patients develop metastases, mainly to the liver
+- Once metastatic, prognosis is poor
+- Molecular profiling is used for risk stratification
+
+## What is SF3B1?
+SF3B1 is a core component of the RNA splicing machinery, and one of the most frequently mutated splicing factors in human cancer.
+
+### What SF3B1 does (normal function)
+SF3B1 stands for Splicing Factor 3B Subunit 1.
+It is part of the U2 small nuclear ribonucleoprotein (U2 snRNP), a key complex of the spliceosome.
+In simple terms:
+- Genes are transcribed into pre-mRNA containing exons and introns
+- The spliceosome removes introns and joins exons
+- SF3B1 helps the spliceosome recognize the correct 3′ splice site
+  
+Specifically, SF3B1:
+- Binds near the branch point sequence
+- Stabilizes U2 snRNP binding
+- Ensures accurate selection of intron–exon boundaries.
+  
+Without SF3B1, splicing would be inaccurate or fail.
+
+### SF3B1 mutations in cancer
+SF3B1 is not randomly mutated. Cancer-associated mutations are:
+- Recurrent
+- Heterozygous
+- Missense
+- Clustered at specific residues
+  
+In uveal melanoma
+- Hotspot mutation: R625 (codon 625)
+- Found in ~15–25% of tumors
+- Associated with late-onset metastasis
+  
+In other cancers
+- Myelodysplastic syndromes (K700E hotspot)
+- Chronic lymphocytic leukemia
+- Breast cancer
+- Pancreatic cancer
+  
+The same protein, but different hotspots in different cancers.
+
+### What SF3B1 mutations do to splicing
+Mutant SF3B1 does not shut down splicing. Instead, it causes systematic errors:
+- Preferential use of cryptic / alternative 3′ splice sites
+- Typically 10–30 nucleotides upstream of the canonical site
+- Leads to:
+  - Exon truncation
+  - Frameshifts
+  - Premature stop codons
+  - Altered protein isoforms
+    
+This explains why:
+- Total gene expression may look normal
+- But isoform composition is altered
+  
+This is exactly why early RNA-seq analyses often missed the effect.
+
+### Why SF3B1 is central to our RNA-seq project
+SF3B1 is:
+- A direct molecular link between mutation and transcriptome phenotype
+- One of the cleanest splicing-factor mutation models in cancer
+- A perfect test case for:
+  - junction-level analysis
+  - PSI-based methods
+  - annotation-aware vs annotation-free tools
+  
+This explains the discrepancy:
+- Paper [1]: splicing-aware reanalysis → clear differences
+- Paper [2]: gene-level focus → no splicing difference
+
+
+# Experimental design
+### Number of samples
+- After quality control, 8 RNA-seq samples were retained for analysis, including n₁ SF3B1-mutant and n₂ SF3B1–wild-type tumors.
+### SF3B1-mutated vs wild-type
+- Samples were classified as SF3B1-mutant if they carried a recurrent missense mutation at codon 625; all other samples were considered SF3B1–wild-type.
+### RNA-seq type (critical for splicing)
+- RNA sequencing was performed using paired-end reads of approximately X bp. Library preparation was (stranded / unstranded). These characteristics were taken into account when selecting splicing analysis tools.
+### Any confounders we control for (batch, sex, etc.)
+- Potential confounders including sequencing batch and patient sex were evaluated. Where metadata was available, batch was included as a covariate in downstream analyses; otherwise, exploratory analyses were used to assess its impact.
+
+
+# Aim of the analysis
+### What exactly are we trying to demonstrate with this analysis, and why is it worth doing now?
+- The aim of this analysis is to reassess the impact of SF3B1 mutations on alternative splicing in uveal melanoma using modern RNA-seq processing and splicing-aware analysis methods. Specifically, we seek to reproduce previously reported SF3B1-associated splicing events, evaluate the robustness of these findings with current tools, and characterize the nature of the resulting splicing alterations.
+
+
 
 # RNA-Seq Pipeline für Uveal Melanoma
 
