@@ -81,6 +81,22 @@ Installiert rMATS-turbo von GitHub und erstellt einen Symlink. Die Dependencies 
 
 **Hinweis:** Der Build dauert ~5-10 Minuten.
 
+**Wichtig - rMATS Path konfigurieren:**
+
+Das Script installiert rMATS nach `~/rmats-turbo/`. Die Pipeline muss wissen, wo rMATS liegt:
+
+**Option 1 (empfohlen):** Environment Variable setzen:
+```bash
+export RMATS_PATH=~/rmats-turbo/rmats.py
+```
+
+**Option 2:** In `nextflow.config` den Default-Path anpassen:
+```groovy
+params {
+    rmats_path = "${System.getProperty('user.home')}/rmats-turbo/rmats.py"
+}
+```
+
 ## Pipeline ausführen
 
 ### Standard-Run
@@ -149,6 +165,46 @@ results/
 - `*_significant_events.pdf` - Plots für signifikante Events (FDR < 0.05) in Target-Genen:
   - ABCC5, CRNDE, UQCC
   - GUSBP11, ANKHD1, ADAM12
+
+## Weiterführende Analysen
+
+Nach der Pipeline können zusätzliche Analysen durchgeführt werden. Die Scripts befinden sich in `analysis_scripts/`:
+
+### 1. Detaillierte rMATS Plots
+
+Erstellt erweiterte Visualisierungen der Splicing-Events:
+
+```bash
+cd results/rmats/rmats_output
+Rscript ../../../analysis_scripts/improved_plots_rMATS.R
+```
+
+**Output:**
+- `signifikante_events_count.pdf` - Übersicht aller signifikanten Events pro Gen
+- `signifikante_events_table.txt` - Tabelle mit allen Events
+- `GENE_events.pdf` - Detaillierte Plots für jedes betroffene Gen (ABCC5, CRNDE, ANKHD1)
+
+### 2. PCA-Analyse
+
+Principal Component Analysis der Genexpression:
+
+```bash
+Rscript analysis_scripts/PCA.R
+```
+
+**Output:** `results/PCA_SF3B1.pdf` - PCA-Plot zeigt Separation zwischen SF3B1-Mutanten und Wildtyp
+
+### 3. Venn-Diagramm
+
+Vergleich der gefundenen Gene mit Literatur (Furney et al.):
+
+```bash
+Rscript analysis_scripts/venn_diagramm.R
+```
+
+**Output:** `results/Venn_Splicing_Genes.pdf` - Überlappung zwischen eigener Analyse und Paper
+
+**Hinweis:** Die Scripts verwenden absolute Pfade. Bei Bedarf müssen die `setwd()` oder Pfade angepasst werden.
 
 ## Troubleshooting
 
