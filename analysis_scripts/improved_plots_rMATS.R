@@ -50,7 +50,7 @@ p1 <- ggplot(all_events %>% count(Gene, EventType),
   theme(axis.text.x = element_text(angle = 45, hjust = 1, face = "bold"))
 
 ggsave("signifikante_events_count.pdf", p1, width = 8, height = 6)
-cat("✅ signifikante_events_count.pdf\n")
+cat("signifikante_events_count.pdf\n")
 
 # Plot 2: Gene-specific plots
 for (gene in unique(all_events$Gene)) {
@@ -70,7 +70,5 @@ for (gene in unique(all_events$Gene)) {
     geom_hline(yintercept = 0, linetype = "dashed", color = "gray50")
   
   ggsave(paste0(gene, "_events.pdf"), p, width = 10, height = 6)
-  cat(paste0("✅ ", gene, "_events.pdf\n"))
+  cat(paste0( gene, "_events.pdf\n"))
 }
-
-cat("\n🎉 Done!\n")
