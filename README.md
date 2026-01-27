@@ -121,41 +121,41 @@ This explains the discrepancy:
 
 
 
-# RNA-Seq Pipeline für Uveal Melanoma
+# RNA-Seq pipeline for uveal melanoma
 
-Nextflow-Pipeline zur Analyse von RNA-Seq Daten mit Fokus auf differentielle Splicing-Analyse bei SF3B1-Mutationen.
+Nextflow pipeline for analyzing RNA-Seq data with a focus on differential splicing analysis in SF3B1 mutations.
 
-## Übersicht
+## Overview
 
-Diese Pipeline führt folgende Schritte aus:
-1. **Quality Control** - FastQC für FASTQ-Dateien
-2. **Alignment** - HISAT2 für Read-Mapping
-3. **Quantifizierung** - featureCounts für Gen-Level Counts
-4. **Splicing-Analyse** - rMATS für differentielle Splicing-Events
+This pipeline performs the following steps:
+1. **Quality Control** - FastQC for FASTQ-Files
+2. **Alignment** - HISAT2 for read mapping
+3. **Quantification** - featureCounts for gene-level counts
+4. **Splicing analysis** - rMATS for differential splicing events
 
-## Voraussetzungen
+## Requirements
 
 - Micromamba/Conda
 - Nextflow
-- ~100 GB freier Speicherplatz
+- ~100 GB free storage space
 
 ## Installation
 
-### 1. Environment Setup
+### 1. Environment setup
 
-Erstelle die Conda/micromamba-Umgebung mit allen benötigten Tools:
+Create the Conda/micromamba environment with all the necessary tools:
 
 ```bash
 micromamba env create -f environment.yml
 ```
 
-Aktiviere die Umgebung:
+Activate the environment:
 
 ```bash
 micromamba activate uveal-melanoma
 ```
 
-Teste die Installation:
+Test the installation:
 
 ```bash
 nextflow -version
@@ -163,81 +163,81 @@ fastqc --version
 hisat2 --version
 ```
 
-### 2. Daten herunterladen
+### 2. Download files
 
-**Wichtig:** Alle Scripts müssen aus dem Projekt-Root-Verzeichnis ausgeführt werden!
+**Important:** Every scripts has to be executed from the project root directory!
 
-#### FASTQ-Dateien (RNA-Seq Daten)
+#### FASTQ-files (RNA-Seq data)
 
 ```bash
 ./scripts/01_download_sra.sh
 ```
 
-Dies lädt 8 Samples herunter (~4 GB komprimiert) und erstellt automatisch `data/samplesheet.csv`.
+This downloads 8 samples (~4 GB compressed) and automatically creates `data/samplesheet.csv`.
 
-#### Referenz-Genom und Annotation
+#### Reference genome and annotation
 
 ```bash
 ./scripts/02_download_reference.sh
 ```
 
 Downloads:
-- Human Referenz-Genom (GRCh38)
-- GENCODE Annotation (v43)
+- Human reference genome (GRCh38)
+- GENCODE annotation (v43)
 
-#### HISAT2-Index erstellen
+#### HISAT2 index creation
 
 ```bash
 ./scripts/03_build_hisat_index.sh
 ```
 
-Erstellt den HISAT2-Index (~8 GB). Der Index-Build dauert ~30-60 Minuten.
+Creates HISAT2 index (~8GB). The index build takes ~30-60 minutes.
 
-#### rMATS installieren
+#### rMATS installation
 
 ```bash
 ./scripts/04_install_rmats.sh
 ```
 
-Installiert rMATS-turbo von GitHub und erstellt einen Symlink. Die Dependencies (Cython, GSL, GCC, etc.) müssen bereits über `environment.yml` installiert sein.
+installs rMATS-turbo from GitHub and creates a Symlink. The dependencies (Cython, GSL, GCC, etc.) have to be already installed over the `environment.yml`.
 
-**Hinweis:** Der Build dauert ~5-10 Minuten.
+**Note:** Building takes ~5-10 minutes.
 
-**Wichtig - rMATS Path konfigurieren:**
+**Important - Configure rMATS Path:**
 
-Das Script installiert rMATS nach `~/rmats-turbo/`. Die Pipeline muss wissen, wo rMATS liegt:
+The script installs rMATS to `~/rmats-turbo/`. The pipeline needs to know where rMATS is located:
 
-**Option 1 (empfohlen):** Environment Variable setzen:
+**Option 1 (recommended):** Set environment variable:
 ```bash
 export RMATS_PATH=~/rmats-turbo/rmats.py
 ```
 
-**Option 2:** In `nextflow.config` den Default-Path anpassen:
+**Option 2:** Adjust the default path in `nextflow.config`:
 ```groovy
 params {
     rmats_path = "${System.getProperty('user.home')}/rmats-turbo/rmats.py"
 }
 ```
 
-## Pipeline ausführen
+## Run pipeline
 
-### Standard-Run
+### Standard run
 
 ```bash
 nextflow run main.nf
 ```
 
-### Mit Resume (nach Fehler/Unterbrechung)
+### With resume (after error/interruption)
 
 ```bash
 nextflow run main.nf -resume
 ```
 
-Nextflow cached erfolgreich abgeschlossene Jobs und startet nur fehlgeschlagene neu.
+Nextflow caches successfully completed jobs and only restarts failed ones.
 
-## Konfiguration
+## Configuration
 
-Anpassungen in `nextflow.config`:
+Adjustments in `nextflow.config`:
 
 ```groovy
 params {
@@ -258,43 +258,43 @@ process {
 }
 ```
 
-## Ergebnisse
+## Results
 
-Nach erfolgreichem Run findest du die Ergebnisse in `results/`:
+After a successful run, you will find the results in `results/`:
 
 ```
 results/
-├── fastqc/              # QC-Reports (HTML)
-├── hisat2/              # BAM-Dateien und Alignment-Logs
-├── counts/              # featureCounts Tabellen
+├── fastqc/              # QC reports (HTML)
+├── hisat2/              # BAM-Files and alignment logs
+├── counts/              # featureCounts tables
 └── rmats/
-    ├── rmats_output/            # rMATS Ergebnisse
-    │   ├── RI.MATS.JC.txt       # Retained Introns
-    │   ├── SE.MATS.JC.txt       # Skipped Exons
-    │   ├── A3SS.MATS.JC.txt     # Alternative 3' Splice Sites
-    │   ├── A5SS.MATS.JC.txt     # Alternative 5' Splice Sites
-    │   └── MXE.MATS.JC.txt      # Mutually Exclusive Exons
-    └── *_significant_events.pdf # Plots für signifikante Events
+    ├── rmats_output/            # rMATS results
+    │   ├── RI.MATS.JC.txt       # Retained introns
+    │   ├── SE.MATS.JC.txt       # Skipped exons
+    │   ├── A3SS.MATS.JC.txt     # Alternative 3' splice sites
+    │   ├── A5SS.MATS.JC.txt     # Alternative 5' splice sites
+    │   └── MXE.MATS.JC.txt      # Mutually exclusive exons
+    └── *_significant_events.pdf # Plots for significant events
 ```
 
-### Wichtige Dateien
+### Important Files
 
-- `RI.MATS.JC.txt` - Retained Intron Events (z.B. ABCC5)
-- `SE.MATS.JC.txt` - Skipped Exon Events
-- `A3SS.MATS.JC.txt` - Alternative 3' Splice Site Events (z.B. CRNDE)
-- `A5SS.MATS.JC.txt` - Alternative 5' Splice Site Events
-- `MXE.MATS.JC.txt` - Mutually Exclusive Exon Events
-- `*_significant_events.pdf` - Plots für signifikante Events (FDR < 0.05) in Target-Genen:
+- `RI.MATS.JC.txt` - Retained intron events (z.B. ABCC5)
+- `SE.MATS.JC.txt` - Skipped exon events
+- `A3SS.MATS.JC.txt` - Alternative 3' splice site events (z.B. CRNDE)
+- `A5SS.MATS.JC.txt` - Alternative 5' splice site events
+- `MXE.MATS.JC.txt` - Mutually exclusive exon events
+- `*_significant_events.pdf` - Plots for significant events (FDR < 0.05) in target genes:
   - ABCC5, CRNDE, UQCC
   - GUSBP11, ANKHD1, ADAM12
 
-## Weiterführende Analysen
+## Further analyses
 
-Nach der Pipeline können zusätzliche Analysen durchgeführt werden. Die Scripts befinden sich in `analysis_scripts/`:
+Additional analyses can be performed after the pipeline. The scripts are located in `analysis_scripts/`:
 
-### 1. Detaillierte rMATS Plots
+### 1. Detailed rMATS plots
 
-Erstellt erweiterte Visualisierungen der Splicing-Events:
+Creates advanced visualizations of splicing events:
 
 ```bash
 cd results/rmats/rmats_output
@@ -302,57 +302,57 @@ Rscript ../../../analysis_scripts/improved_plots_rMATS.R
 ```
 
 **Output:**
-- `signifikante_events_count.pdf` - Übersicht aller signifikanten Events pro Gen
-- `signifikante_events_table.txt` - Tabelle mit allen Events
-- `GENE_events.pdf` - Detaillierte Plots für jedes betroffene Gen (ABCC5, CRNDE, ANKHD1)
+- `signifikante_events_count.pdf` - Overview of all significant events per gene
+- `signifikante_events_table.txt` - Table with all events
+- `GENE_events.pdf` - Detailed plots for each affected gene (ABCC5, CRNDE, ANKHD1)
 
-### 2. PCA-Analyse
+### 2. PCA analysis
 
-Principal Component Analysis der Genexpression:
+Principal component analysis of gene expression:
 
 ```bash
 Rscript analysis_scripts/PCA.R
 ```
 
-**Output:** `results/PCA_SF3B1.pdf` - PCA-Plot zeigt Separation zwischen SF3B1-Mutanten und Wildtyp
+**Output:** `results/PCA_SF3B1.pdf` - PCA-plot shows separation between SF3B1 mutants and wild type
 
-### 3. Venn-Diagramm
+### 3. Venn diagram
 
-Vergleich der gefundenen Gene mit Literatur (Furney et al.):
+Comparison of the genes found with literature (Furney et al.):
 
 ```bash
 Rscript analysis_scripts/venn_diagramm.R
 ```
 
-**Output:** `results/Venn_Splicing_Genes.pdf` - Überlappung zwischen eigener Analyse und Paper
+**Output:** `results/Venn_Splicing_Genes.pdf` - Overlaps between own analysis and the paper
 
-**Hinweis:** Die Scripts verwenden absolute Pfade. Bei Bedarf müssen die `setwd()` oder Pfade angepasst werden.
+**Hinweis:** The scripts use absolute paths. If necessary, the `setwd()` or paths must be adjusted.
 
 ## Troubleshooting
 
-### Pipeline startet nicht
+### Pipeline does not start
 
-**Problem:** `hisat2: command not found`
+**Issue:** `hisat2: command not found`
 
-**Lösung:** Aktiviere die Conda-Umgebung:
+**Solution:** Activate conda environment:
 ```bash
 micromamba activate uveal-melanoma
 ```
 
-### Resume funktioniert nicht
+### Resume not working
 
-**Problem:** Nextflow startet Pipeline von vorne
+**Issue:** Nextflow restarts pipeline from the beginning
 
-**Lösung:** 
-- Verwende `-resume` Flag
-- Prüfe, ob `.nextflow/` Verzeichnis existiert
-- Bei Problemen: `rm -rf .nextflow/cache_backup/`
+**Solution:** 
+- Use `-resume` flag
+- Check whether the `.nextflow/` directory exists
+- If problems occur: `rm -rf .nextflow/cache_backup/`
 
-### Speicherprobleme
+### Memory issues
 
-**Problem:** `OutOfMemoryError` oder Jobs werden gekillt
+**Issue:** `OutOfMemoryError` or jobs are terminated
 
-**Lösung:** Reduziere Parallelität in `nextflow.config`:
+**Solution:** Reduce parallelism in `nextflow.config`:
 ```groovy
 process {
     cpus = 2
@@ -360,43 +360,43 @@ process {
 }
 ```
 
-### Beschädigte FASTQ-Dateien
+### Damaged FASTQ files
 
-**Problem:** `gzip: unexpected end of file`
+**Issue:** `gzip: unexpected end of file`
 
-**Lösung:** Datei neu herunterladen:
+**Solution:** Download the file again:
 ```bash
 rm data/fastq/SRR628XXX_1.fastq.gz
 wget -P data/fastq/ ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR628/SRR628XXX/SRR628XXX_1.fastq.gz
 ```
 
-## Projekt-Struktur
+## Project structure
 
 ```
 RNA_seq/
-├── main.nf                  # Nextflow-Pipeline
-├── nextflow.config          # Konfiguration
-├── environment.yml          # Conda-Environment
-├── README.md               # Diese Datei
+├── main.nf                  # Nextflow pipeline
+├── nextflow.config          # Configurations
+├── environment.yml          # Conda environment
+├── README.md               # This file
 ├── scripts/
 │   ├── 01_download_sra.sh
 │   ├── 02_download_reference.sh
 │   ├── 03_build_hisat_index.sh
 │   └── 04_install_rmats.sh
 ├── data/
-│   ├── samplesheet.csv     # Sample-Metadaten
-│   └── fastq/              # FASTQ-Dateien
+│   ├── samplesheet.csv     # Sample metadaten
+│   └── fastq/              # FASTQ files
 ├── reference/
-│   ├── genome/             # Referenz-Genom
-│   ├── annotation/         # GTF-Annotation
-│   └── hisat2_index/       # HISAT2-Index
-├── results/                # Pipeline-Outputs
-└── work/                   # Nextflow Work-Dir (temp)
+│   ├── genome/             # Referenz genome
+│   ├── annotation/         # GTF annotation
+│   └── hisat2_index/       # HISAT2 index
+├── results/                # Pipeline outputs
+└── work/                   # Nextflow work directory (temp)
 ```
 
 ## Samples
 
-Die Pipeline analysiert 8 Uveal Melanoma Samples:
+The pipeline analyzes 8 uveal melanoma samples:
 
 | Sample ID  | Condition       |
 |-----------|-----------------|
@@ -409,23 +409,23 @@ Die Pipeline analysiert 8 Uveal Melanoma Samples:
 | SRR628588 | SF3B1_wildtype |
 | SRR628589 | SF3B1_wildtype |
 
-## Ressourcen-Anforderungen
+## Resource requirements
 
-### Minimale Anforderungen
+### Minimum requirements
 - 4 CPUs
 - 16 GB RAM
-- 100 GB Speicher
+- 100 GB storage
 
-### Empfohlen
+### Recommended
 - 8+ CPUs
 - 32 GB RAM
-- 150 GB Speicher
+- 150 GB storage
 
-### Laufzeit
-- Komplette Pipeline: ~2-3 Stunden (8 CPUs)
-- Mit Resume: Abhängig von fehlgeschlagenen Jobs
+### Runtime
+- Complete pipeline: ~2-3 hours (8 CPUs)
+- With resume: Depends on failed jobs
 
-## Referenzen
+## References
 
 - **HISAT2:** Kim et al. (2019) - Graph-based genome alignment
 - **featureCounts:** Liao et al. (2014) - Read summarization
