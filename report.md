@@ -82,3 +82,8 @@ relevance of the observed effects, even in the absence of a full replication of 
 Taken together, these findings suggest that re-analyzing or re-evaluating previously published results can be a valuable strategy, particularly when there is uncertainty
 regarding the original analytical methods or data processing choices. Independent validation using alternative pipelines may therefore contribute to a more robust and
 nuanced interpretation of complex phenomena such as mutation-associated splicing changes.
+
+## References
+Furney SJ, Pedersen M, Gentien D, Dumont AG, Rapinat A, Desjardins L, Turajlic S, Piperno-Neumann S, de la Grange P, Roman-Roman S, Stern MH, Marais R. SF3B1 mutations are associated with alternative splicing in uveal melanoma. Cancer Discov. 2013 Oct;3(10):1122-1129. doi: 10.1158/2159-8290.CD-13-0330. Epub 2013 Jul 16. PMID: 23861464; PMCID: PMC5321577.
+
+Harbour JW, Roberson ED, Anbunathan H, Onken MD, Worley LA, Bowcock AM. Recurrent mutations at codon 625 of the splicing factor SF3B1 in uveal melanoma. Nat Genet. 2013 Feb;45(2):133-5. doi: 10.1038/ng.2523. Epub 2013 Jan 13. PMID: 23313955; PMCID: PMC3789378.
