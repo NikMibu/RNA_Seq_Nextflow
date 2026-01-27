@@ -1,6 +1,6 @@
 # Report  &mdash; Subject 1
 ## Baseline Situation
-HHarbour, J. William et al. performed RNA sequencing on biological samples obtained from patients suffering from uveal melanoma, the most common primary malignancy of the
+Harbour, J. William et al. performed RNA sequencing on biological samples obtained from patients suffering from uveal melanoma, the most common primary malignancy of the
 eye, which is frequently associated with the development of fatal metastases.
 
 Uveal melanoma represents one of the few cancer types that show a strong association with mutations in the SF3B1 gene. SF3B1 encodes a core component of the spliceosome and
@@ -21,7 +21,7 @@ These contrasting findings highlight the potential influence of analytical strat
 
 ## Our Analysis
 ### Basics
-WThe aim of this project was to reproduce, as closely as possible, the results reported by Furney, Simon J. et al. using an independently implemented analysis pipeline. The
+The aim of this project was to reproduce, as closely as possible, the results reported by Furney, Simon J. et al. using an independently implemented analysis pipeline. The
 pipeline consisted of the following main steps:
 1. **Quality Control** &mdash; FastQC was used to assess the quality of raw FASTQ files
 2. **Alignment** &mdash; HISAT2 was applied for mapping reads to the reference genome
