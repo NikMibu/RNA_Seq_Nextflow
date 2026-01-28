@@ -9,8 +9,7 @@ The uvea is the middle, pigmented layer of the eye, and it has three parts:
 Uveal melanoma arises from melanocytes (pigment-producing cells) located in one of these uveal tissues—most commonly the choroid.
 
 ### Key characteristics
-It is the most common primary intraocular cancer in adults
-Distinct from cutaneous (skin) melanoma:
+It is the most common primary intraocular cancer in adults distinct from cutaneous (skin) melanoma:
 - Different mutation spectrum
 - Different biology
 - Different clinical behavior
@@ -18,6 +17,7 @@ Often diagnosed by eye examination rather than biopsy
 
 ### Genetics & molecular biology (why it matters for our project)
 Uveal melanoma is genetically quite simple but very specific:
+
 Early “driver” mutations (usually mutually exclusive):
 - GNAQ
 - GNA11
@@ -40,7 +40,7 @@ it encodes a core splicing factor, making uveal melanoma a natural model to stud
 SF3B1 is a core component of the RNA splicing machinery, and one of the most frequently mutated splicing factors in human cancer.
 
 ### What SF3B1 does (normal function)
-SF3B1 stands for Splicing Factor 3B Subunit 1.
+SF3B1 stands for splicing factor 3B subunit 1.
 It is part of the U2 small nuclear ribonucleoprotein (U2 snRNP), a key complex of the spliceosome.
 In simple terms:
 - Genes are transcribed into pre-mRNA containing exons and introns
@@ -61,12 +61,12 @@ SF3B1 is not randomly mutated. Cancer-associated mutations are:
 - Missense
 - Clustered at specific residues
   
-In uveal melanoma
+In uveal melanoma:
 - Hotspot mutation: R625 (codon 625)
 - Found in ~15–25% of tumors
 - Associated with late-onset metastasis
   
-In other cancers
+In other cancers:
 - Myelodysplastic syndromes (K700E hotspot)
 - Chronic lymphocytic leukemia
 - Breast cancer
@@ -95,9 +95,9 @@ SF3B1 is:
 - A direct molecular link between mutation and transcriptome phenotype
 - One of the cleanest splicing-factor mutation models in cancer
 - A perfect test case for:
-  - junction-level analysis
+  - Junction-level analysis
   - PSI-based methods
-  - annotation-aware vs annotation-free tools
+  - Annotation-aware vs annotation-free tools
   
 This explains the discrepancy:
 - Paper [1]: splicing-aware reanalysis → clear differences
@@ -110,7 +110,7 @@ This explains the discrepancy:
 ### SF3B1-mutated vs wild-type
 - Samples were classified as SF3B1-mutant if they carried a recurrent missense mutation at codon 625; all other samples were considered SF3B1–wild-type.
 ### RNA-seq type (critical for splicing)
-- RNA sequencing was performed using paired-end reads of approximately X bp. Library preparation was (stranded / unstranded). These characteristics were taken into account when selecting splicing analysis tools.
+- RNA sequencing was performed using paired-end reads. Library preparation was (stranded / unstranded). These characteristics were taken into account when selecting splicing analysis tools.
 ### Any confounders we control for (batch, sex, etc.)
 - Potential confounders including sequencing batch and patient sex were evaluated. Where metadata was available, batch was included as a covariate in downstream analyses; otherwise, exploratory analyses were used to assess its impact.
 
