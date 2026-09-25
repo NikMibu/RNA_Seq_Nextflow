@@ -1,3 +1,14 @@
+# RNA-Seq Nextflow – SF3B1 splicing in uveal melanoma
+
+**Nextflow pipeline (FastQC → HISAT2 → featureCounts → rMATS) that re-analyses public RNA-seq data from uveal melanoma to test whether SF3B1 mutations cause differential alternative splicing.**
+
+Two earlier studies on the same data disagree: the original gene-level analysis found no splicing differences between SF3B1-mutant and wild-type tumours, while a splicing-aware re-analysis did. This project reruns the data with current tools to check which result holds up. Downstream R scripts cover PCA, Venn diagrams, rMATS plots and DEXSeq. The findings are written up in [`report.md`](report.md).
+
+- [Scientific context](#scientific-context-of-the-project)
+- [Experimental design](#experimental-design) and [aim](#aim-of-the-analysis)
+- [Pipeline: installation, running, configuration](#rna-seq-pipeline-for-uveal-melanoma)
+- [Results](#results) and [further analyses](#further-analyses)
+
 # Scientific context of the Project
 ## What is uveal melanoma?
 Uveal melanoma is a rare but aggressive cancer of the eye. More precisely what “uveal” means:
