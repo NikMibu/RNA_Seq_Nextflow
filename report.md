@@ -1,89 +1,82 @@
-# Report  &mdash; Subject 1
-## Baseline Situation
-Harbour, J. William et al. performed RNA sequencing on biological samples obtained from patients suffering from uveal melanoma, the most common primary malignancy of the
-eye, which is frequently associated with the development of fatal metastases.
+# Report: SF3B1-associated splicing in uveal melanoma
 
-Uveal melanoma represents one of the few cancer types that show a strong association with mutations in the SF3B1 gene. SF3B1 encodes a core component of the spliceosome and
-plays a crucial role in the recognition of splice sites during pre-mRNA processing. Given this central function, mutations in SF3B1 are expected to have a direct impact on
-RNA splicing.
+## Background
 
-Surprisingly, the original study by Harbour, J. William et al. did not report substantial splicing differences between SF3B1-mutated and non-mutated samples. However, a
-subsequent re-analysis of the same RNA-seq datasets by Furney, Simon J. et al. identified multiple genes exhibiting differential alternative splicing between the two
-conditions. Among the genes reported were:
-- ABCC5
-- CRNDE
-- UQCC
-- GUSBP11
-- ANKHD1
-- ADAM12
+Uveal melanoma is the most common primary cancer of the eye in adults, and about half of all patients go on to develop metastases. It is also one of the few tumour types in which the splicing factor **SF3B1** is recurrently mutated, almost always at codon R625. Because SF3B1 is part of the core spliceosome and helps recognise the branch point and 3′ splice site, a mutation there should leave a visible mark on the transcriptome.
 
-These contrasting findings highlight the potential influence of analytical strategies and methodological choices on the detection of splicing alterations.
+Two studies looked at the same public RNA-seq data and came to different conclusions:
 
-## Our Analysis
-### Basics
-The aim of this project was to reproduce, as closely as possible, the results reported by Furney, Simon J. et al. using an independently implemented analysis pipeline. The
-pipeline consisted of the following main steps:
-1. **Quality Control** &mdash; FastQC was used to assess the quality of raw FASTQ files
-2. **Alignment** &mdash; HISAT2 was applied for mapping reads to the reference genome
-3. **Quantification** &mdash; featureCounts was used to obtain gene-level read counts
-4. **Splicing analysis** &mdash; rMATS was employed to detect differential alternative splicing events
+- **Harbour et al. (2013)** reported the SF3B1 R625 mutations but found no substantial splicing differences between mutant and wild-type tumours.
+- **Furney et al. (2013)** re-analysed the data with a splicing-focused approach and reported differential alternative splicing in several genes, including **ABCC5, CRNDE, UQCC, GUSBP11, ANKHD1** and **ADAM12**.
 
-This workflow reflects commonly used best practices in RNA-seq data analysis and allows for a systematic comparison with previously published results.
+The question for this project: with a current, independently built pipeline, which of the two results can be reproduced?
 
-### Our results
-A summary of the rMATS output is shown below:
+## Data and methods
 
-```
-EventType	EventTypeDescription	TotalEventsJC	TotalEventsJCEC	SignificantEventsJC	SigEventsJCSample1HigherInclusion	SigEventsJCSample2HigherInclusion	SignificantEventsJCEC	SigEventsJCECSample1HigherInclusion	SigEventsJCECSample2HigherInclusion
-SE	skipped exon	38410	40056	583	286	297	708	374	334
-A5SS	alternative 5' splice sites	4805	4856	114	74	40	160	110	50
-A3SS	alternative 3' splice sites	7408	7439	297	198	99	324	216	108
-MXE	mutually exclusive exons	4726	5021	72	43	29	93	57	36
-RI	retained intron	6468	6575	447	355	92	657	539	118
-```
+Eight samples from the Harbour et al. dataset (SRA runs SRR628582–SRR628589): three SF3B1-mutant and five SF3B1-wild-type tumours, paired-end reads.
 
-Each row corresponds to a distinct type of alternative splicing event:
-- SE (Skipped Exon) &mdash; an exon is included in one condition and skipped in another
-- A5SS &mdash; alternative 5′ splice site usage
-- A3SS &mdash; alternative 3′ splice site usage
-- MXE &mdash; mutually exclusive exons (only one of two exons is included)
-- RI (Retained Intron) &mdash; an intron remains in the mature RNA
+The analysis runs as a Nextflow pipeline (`main.nf`):
 
-Overall, the rMATS results indicate widespread alternative splicing, with skipped exon events representing the dominant class. This observation is consistent with previous
-studies showing that exon skipping is the most prevalent splicing mechanism in mammalian transcriptomes. Although tens of thousands of potential events were detected, only
-a relatively small fraction reached statistical significance, which is typical for RNA-seq–based splicing analyses.
+| Step | Tool | Output |
+|---|---|---|
+| Quality control | FastQC | per-sample QC reports (`results/fastqc/`) |
+| Alignment | HISAT2 (GRCh38) | sorted BAM files |
+| Gene quantification | featureCounts | gene-level counts (`results/counts/`) |
+| Differential splicing | rMATS (mutant vs. wild type) | event tables per splicing type (`results/rmats/`) |
 
-As our primary objective was to reproduce the findings of Furney, Simon J. et al., we restricted our downstream analysis to the genes reported in their study. After
-filtering for these candidates, we detected differential splicing events in three out of the six genes described previously:
-**ABCC5**, **ANKHD1** and **CRNDE**.
+Downstream analyses in R (`analysis_scripts/`): PCA on the count matrix, Venn comparison with the genes from Furney et al., and plots of the significant rMATS events. Events count as significant at FDR < 0.05.
 
-![](report_assets/Venn_Splicing_Genes.png)
+## Results
 
-More specifically, we observed skipped exon events in ABCC5, as well as alternative 3′ splice site usage in ANKHD1, CRNDE and ABCC5.
+### Genome-wide splicing events
 
-![](report_assets/SE_significant_events.png)
-![](report_assets/A3SS_significant_events.png)
-![](report_assets/signifikante_events_count.png)
+rMATS tested roughly 62,000 events. Counted on junction reads (JC) and on junction plus exon-body reads (JCEC):
 
-In addition to splicing-specific analyses, we performed a principal component analysis (PCA) based on expression data. The PCA shows a
-partial separation between SF3B1-mutated samples and wild-type controls, indicating systematic transcriptomic differences between the two groups.
+| Event type | Tested (JC) | Significant (JC) | Significant (JCEC) |
+|---|---:|---:|---:|
+| SE – skipped exon | 38,410 | 583 | 708 |
+| RI – retained intron | 6,468 | 447 | 657 |
+| A3SS – alternative 3′ splice site | 7,408 | 297 | 324 |
+| A5SS – alternative 5′ splice site | 4,805 | 114 | 160 |
+| MXE – mutually exclusive exons | 4,726 | 72 | 93 |
 
-![](report_assets/PCA.png)
+Skipped exons are the largest class in absolute numbers, as expected for mammalian transcriptomes. Relative to the number of tested events, however, **A3SS** and **RI** events are enriched among the significant hits (about 4 % and 7 % of tested events vs. 1.5 % for SE). The A3SS enrichment matches the known mechanism of mutant SF3B1, which selects cryptic 3′ splice sites shortly upstream of the canonical one. For A3SS, about two thirds of the significant events have higher inclusion in the mutant group.
 
-### Conclusion
-Even though we were not able to precisely reproduce the results reported by Furney, Simon J. et al., our analysis pipeline was nevertheless able to identify several genes
-that appear to be affected by alternative splicing in the context of SF3B1 mutations. While the overlap with the originally published results was halfed, the detection of
-overlapping candidate genes indicates that our approach is capable of capturing biologically relevant splicing alterations.
+![Number of significant events per type](report_assets/significant_events_count.png)
 
-Importantly, the observation of promising results obtained through two independent analytical strategies further supports the assumption that SF3B1 mutations are associated
-with a substantial number of alternative splicing events. This consistency across different methodological approaches strengthens the overall confidence in the biological
-relevance of the observed effects, even in the absence of a full replication of the original study.
+### Comparison with Furney et al.
 
-Taken together, these findings suggest that re-analyzing or re-evaluating previously published results can be a valuable strategy, particularly when there is uncertainty
-regarding the original analytical methods or data processing choices. Independent validation using alternative pipelines may therefore contribute to a more robust and
-nuanced interpretation of complex phenomena such as mutation-associated splicing changes.
+Of the six genes reported by Furney et al., three show a significant event in this analysis: **ABCC5, ANKHD1** and **CRNDE**.
+
+![Overlap with Furney et al.](report_assets/Venn_Splicing_Genes.png)
+
+| Gene | Event | ΔPSI (IncLevelDifference) | FDR |
+|---|---|---:|---:|
+| CRNDE | A3SS | −0.48 | 2.5 × 10⁻⁴ |
+| CRNDE | A3SS | −0.33 | 6.4 × 10⁻³ |
+| ABCC5 | A3SS | −0.45 | 7.9 × 10⁻⁴ |
+| ANKHD1 | A3SS | −0.30 | 5.9 × 10⁻³ |
+| ABCC5 | SE | 0.13 | 1.2 × 10⁻² |
+
+Four of the five hits are alternative 3′ splice site events with large PSI shifts (30–48 percentage points). This is the splicing pattern Furney et al. describe for SF3B1-mutant tumours. UQCC, GUSBP11 and ADAM12 did not reach significance.
+
+![Significant SE events](report_assets/SE_significant_events.png)
+![Significant A3SS events](report_assets/A3SS_significant_events.png)
+
+### Gene expression (PCA)
+
+![PCA of gene expression](report_assets/PCA.png)
+
+At the gene-expression level, mutant and wild-type samples do **not** separate: the three mutant samples fall among the wild-type samples on PC1 and PC2. PC1 (47 % of variance) is dominated by a single wild-type sample (SRR628589). This fits the picture from both papers. SF3B1 mutations change isoform composition rather than overall gene expression, so a gene-level analysis like the one in Harbour et al. can easily miss them.
+
+## Conclusion
+
+The re-analysis supports Furney et al.: SF3B1-mutant uveal melanomas show differential splicing, dominated by alternative 3′ splice site usage. Half of the previously reported genes (ABCC5, ANKHD1, CRNDE) were reproduced with an independent pipeline, each with large effect sizes. Gene-level expression, in contrast, does not distinguish the two groups, which explains why the original gene-focused analysis found no effect.
+
+Limitations: with three mutant samples the statistical power is low, which probably explains why the remaining three genes were not reproduced. The PCA also shows one strong outlier sample. Differences in reference annotation and tool versions compared with 2013 may shift individual events as well.
 
 ## References
-Furney SJ, Pedersen M, Gentien D, Dumont AG, Rapinat A, Desjardins L, Turajlic S, Piperno-Neumann S, de la Grange P, Roman-Roman S, Stern MH, Marais R. SF3B1 mutations are associated with alternative splicing in uveal melanoma. Cancer Discov. 2013 Oct;3(10):1122-1129. doi: 10.1158/2159-8290.CD-13-0330. Epub 2013 Jul 16. PMID: 23861464; PMCID: PMC5321577.
 
-Harbour JW, Roberson ED, Anbunathan H, Onken MD, Worley LA, Bowcock AM. Recurrent mutations at codon 625 of the splicing factor SF3B1 in uveal melanoma. Nat Genet. 2013 Feb;45(2):133-5. doi: 10.1038/ng.2523. Epub 2013 Jan 13. PMID: 23313955; PMCID: PMC3789378.
+Furney SJ, Pedersen M, Gentien D, et al. SF3B1 mutations are associated with alternative splicing in uveal melanoma. *Cancer Discov.* 2013;3(10):1122–1129. doi:10.1158/2159-8290.CD-13-0330
+
+Harbour JW, Roberson ED, Anbunathan H, Onken MD, Worley LA, Bowcock AM. Recurrent mutations at codon 625 of the splicing factor SF3B1 in uveal melanoma. *Nat Genet.* 2013;45(2):133–135. doi:10.1038/ng.2523
